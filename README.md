@@ -1,4 +1,4 @@
-# reids manage
+# redis manage
 
 统一管理redis的集群服务，方便各个业务申请专用的redis服务集群节点。
 
