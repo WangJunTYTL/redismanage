@@ -13,15 +13,19 @@
     <groupId>com.peaceful</groupId>
     <artifactId>redis-manage</artifactId>
     <version>1.0-SNAPSHOP</version>
-    <description>redis node \ cluster manage</description>
+    <description>redis node cluster manage</description>
+
+
 
 
     <dependencies>
+
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
         </dependency>
 
+        <!-- 利用代理模式跟踪redis执行情况-->
         <dependency>
             <groupId>cglib</groupId>
             <artifactId>cglib</artifactId>
