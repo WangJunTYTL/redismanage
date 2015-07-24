@@ -17,3 +17,13 @@ A业务部门使用方式
 B业务部门使用：
     
     Redis.cmd(B).get("foo")
+
+
+支持集群方式：
+
+1. jedis ShardJedis 
+1. Twitter [twemproxy](https://github.com/WangJunTYTL/twemproxy)
+
+
+
+
