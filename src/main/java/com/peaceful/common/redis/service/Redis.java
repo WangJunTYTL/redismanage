@@ -17,7 +17,6 @@ public abstract class Redis {
 
 
     private static ProxySource<JedisCommands> proxySource;
-    private static Map<String,JedisCommands> commandsMap = new ConcurrentHashMap<String, JedisCommands>();
 
 
 
@@ -26,16 +25,6 @@ public abstract class Redis {
     }
 
 
-    private static JedisCommands createProxy(String hostname){
-        if (commandsMap.containsKey(hostname)){
-            return commandsMap.get(hostname);
-        }else {
-            JedisCommands commands = proxySource.createProxy(hostname, new UsageTrackingImp(), RedisType.PROXY);
-            commandsMap.put(hostname,commands);
-            return commands;
-        }
-    }
-
     /**
      * 获取通过haproxy集群redis服务
      *
@@ -43,7 +32,6 @@ public abstract class Redis {
      */
     public static JedisCommands cmd() {
        return proxySource.createProxy("haproxy", new UsageTrackingImp(), RedisType.PROXY);
-//        return createProxy("haproxy");
     }
 
     /**
@@ -54,7 +42,6 @@ public abstract class Redis {
      */
     public static JedisCommands cmd(String hostName) {
         return proxySource.createProxy(hostName, new UsageTrackingImp(), RedisType.PROXY);
-//        return createProxy(hostName);
 
     }
 
