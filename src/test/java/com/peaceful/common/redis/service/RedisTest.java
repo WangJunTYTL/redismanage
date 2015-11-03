@@ -27,6 +27,6 @@ public class RedisTest {
 
     @Test
     public void testShardCmd1() throws Exception {
-
+        Redis.shardCmd("cacheCluster").get("foo");
     }
 }
