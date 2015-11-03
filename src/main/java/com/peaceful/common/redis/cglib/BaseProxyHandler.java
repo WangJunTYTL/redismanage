@@ -2,7 +2,10 @@ package com.peaceful.common.redis.cglib;
 
 import com.peaceful.common.redis.RedisType;
 import com.peaceful.common.redis.proxy.JedisPoolServiceImpl;
+import com.peaceful.common.redis.proxy.RedisNodeServiceImpl;
 import com.peaceful.common.redis.share.ShardJedisPoolService;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
@@ -40,17 +43,22 @@ public class BaseProxyHandler<T> {
      * @return the underlying pooled object
      */
     T getJedisObject() {
-        if (redisType == RedisType.PROXY) {
-            JedisPool jedisPool = JedisPoolServiceImpl.getJedisPoolService().getJedisPoolByHostName(redisNode);
-            redisClient = (T) jedisPool.getResource();
-            this.jedisPool = jedisPool;
-        } else if (redisType == RedisType.SHARD) {
-            ShardedJedisPool jedisPool = ShardJedisPoolService.getShardJedisPoolService().getShardJedisPoolByClusterName(redisNode);
-            redisClient = (T) jedisPool.getResource();
-            this.jedisPool = jedisPool;
-            isShare = true;
+        try {
+            if (redisType == RedisType.PROXY) {
+                JedisPool jedisPool = JedisPoolServiceImpl.getJedisPoolService().getJedisPoolByHostName(redisNode);
+                redisClient = (T) jedisPool.getResource();
+                this.jedisPool = jedisPool;
+            } else if (redisType == RedisType.SHARD) {
+                ShardedJedisPool jedisPool = ShardJedisPoolService.getShardJedisPoolService().getShardJedisPoolByClusterName(redisNode);
+                redisClient = (T) jedisPool.getResource();
+                this.jedisPool = jedisPool;
+                isShare = true;
+            }
+            return redisClient;
+        } catch (Exception e) {
+            logger.error("redis error {}", ExceptionUtils.getStackTrace(e));
+            throw new RuntimeException("can't get jedis client from pool,redis cluster is " + redisNode + ":" + RedisNodeServiceImpl.getRedisNodeService().getRedisNode(redisNode), e);
         }
-        return redisClient;
     }
 
 
@@ -71,23 +79,23 @@ public class BaseProxyHandler<T> {
     }
 
     Object doInvoke(Method method, Object[] args) throws Throwable {
+        if (StringUtils.isEmpty(redisNode)) {
+            logger.debug("redis node is empty");
+            return disableProxy();
+        } else if (method.getDeclaringClass() == Object.class) {
+            logger.debug("Object declaring method invoke {}", method.getName());
+            return disableProxy();
+        }
         long now = System.currentTimeMillis();
-        getJedisObject();
         Object r = null;
         boolean flag = true;
         try {
+            getJedisObject();
             r = method.invoke(redisClient, args);
         } catch (Exception e) {
-            if (isShare) {
-                ShardedJedisPool shardedJedisPool = (ShardedJedisPool) jedisPool;
-                shardedJedisPool.returnBrokenResource((ShardedJedis) redisClient);
-                flag = false;
-            } else {
-                JedisPool jedisPool1 = (JedisPool) jedisPool;
-                jedisPool1.returnBrokenResource((Jedis) redisClient);
-                flag = false;
-            }
-            throw new RuntimeException("redis cmd exe error..please ensure your params is right . current cmd is " + method.getName() + " params is " + args.toString() + " error stack is \n" + e.getCause());
+            flag = false;
+            logger.error("redis error {}", ExceptionUtils.getStackTrace(e));
+            throw new RuntimeException("redis cmd exe error..please ensure your params is right . current cmd is " + method.getName() + " params is " + args.toString() + " error stack is " + ExceptionUtils.getStackTrace(e));
 
         } finally {
             if (flag) {
@@ -99,6 +107,14 @@ public class BaseProxyHandler<T> {
                     JedisPool jedisPool1 = (JedisPool) jedisPool;
                     if (redisClient != null)
                         jedisPool1.returnResource((Jedis) redisClient);
+                }
+            } else {
+                if (isShare) {
+                    ShardedJedisPool shardedJedisPool = (ShardedJedisPool) jedisPool;
+                    shardedJedisPool.returnBrokenResource((ShardedJedis) redisClient);
+                } else {
+                    JedisPool jedisPool1 = (JedisPool) jedisPool;
+                    jedisPool1.returnBrokenResource((Jedis) redisClient);
                 }
             }
         }
