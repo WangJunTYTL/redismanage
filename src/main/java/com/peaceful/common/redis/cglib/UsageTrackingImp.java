@@ -15,6 +15,7 @@ public class UsageTrackingImp implements UsageTracking {
 
     @Override
     public void costTime(String cmd, Object[] params, Object res, long time) {
-        logger.info("redis cmd is {} params is  {} result is {} cost time is {}", cmd, params, res, time);
+        if (time > 10)
+            logger.info("redis cmd is {} params is  {} result is {} cost time is {}", cmd, params, res, time);
     }
 }
