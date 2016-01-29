@@ -13,14 +13,15 @@ import java.lang.reflect.Method;
 import java.util.concurrent.*;
 
 /**
+ * 根据指定的集群节点，依次执行以下动作：获取对应集群的连接，执行命令，返回结果，并释放连接
+ * <p/>
  * Created by wangjun on 16/1/29.
  */
-public  class BasicRedisInvoke implements RedisInvoke {
+public class BasicRedisInvoke implements RedisInvoke {
 
     Logger logger = LoggerFactory.getLogger(getClass());
     ShardJedisPoolService shardJedisPoolService = ShardJedisPoolService.getShardJedisPoolService();
     JedisPoolService jedisPoolService = JedisPoolServiceImpl.getJedisPoolService();
-
 
 
     @Override
@@ -29,6 +30,7 @@ public  class BasicRedisInvoke implements RedisInvoke {
             return null;
         }
 
+        // 获取可用连接从连接池
         Pool pool;
         if (type == RedisClientType.PROXY) {
             pool = jedisPoolService.getJedisPoolByHostName(node);
@@ -38,12 +40,12 @@ public  class BasicRedisInvoke implements RedisInvoke {
         if (pool == null) {
             throw new RuntimeException(String.format("Error: can't get redis connection ,because of not connection pool of %s", node));
         }
-
-        Object result = null;
         JedisCommands commands = (JedisCommands) pool.getResource();
         if (commands == null) {
             throw new RuntimeException("Error: can't get available connection from pool");
         }
+
+        // 执行并返回结果然后归还连接
         try {
             return method.invoke(commands, args);
         } catch (Exception e) {
@@ -53,7 +55,7 @@ public  class BasicRedisInvoke implements RedisInvoke {
             pool.returnResource(commands);
         }
 
-        return result;
+        return null;
     }
 
 

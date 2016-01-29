@@ -8,16 +8,23 @@ import java.lang.reflect.Method;
 import java.util.concurrent.*;
 
 /**
+ * 利用future不是为了防止网络阻塞，但可以防止因网络阻塞或链接不释放导致调用者被长时间阻塞的问题
+ *
  * Created by wangjun on 16/1/29.
  */
 public class RedisFutureInvoke extends BasicRedisInvoke {
 
     Logger logger = LoggerFactory.getLogger(getClass());
 
-    ExecutorService executorService = Executors.newCachedThreadPool();
+    private ExecutorService executorService = Executors.newCachedThreadPool();
 
-    BasicRedisInvoke basicRedisInvoke = new BasicRedisInvoke();
+    private BasicRedisInvoke basicRedisInvoke = new BasicRedisInvoke();
 
+    /**
+     * 执行redis命令前
+     *
+     * @param invokeContext
+     */
     void invokeBefore(InvokeContext invokeContext) {
         try {
             RedisInvokeChain.invokeBefore.execute(invokeContext);
@@ -37,13 +44,13 @@ public class RedisFutureInvoke extends BasicRedisInvoke {
         invokeContext.put("redis.args", args);
         invokeBefore(invokeContext);
 
-        // 利用future不是为了防止网络阻塞，但可以防止因网络阻塞或链接不释放导致调用者被长时间阻塞的问题
         FutureTask future = new FutureTask(new FutureInvoke(basicRedisInvoke, method, args, type, node));
         executorService.submit(future);
         Object result;
         try {
             result = future.get(3, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            // 为了方便用户端直接使用服务而不显示地处理异常，异常信息均转为运行期异常
             throw new RuntimeException(ExceptionUtils.getStackTrace(e));
         } catch (ExecutionException e) {
             throw new RuntimeException(ExceptionUtils.getStackTrace(e));
@@ -58,6 +65,11 @@ public class RedisFutureInvoke extends BasicRedisInvoke {
         return result;
     }
 
+    /**
+     * 执行redis命令后
+     *
+     * @param invokeContext
+     */
     void invokeAfter(InvokeContext invokeContext) {
         try {
             RedisInvokeChain.invokeAfter.execute(invokeContext);

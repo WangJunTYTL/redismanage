@@ -6,9 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 利用perf4j对redis执行后监控埋点处理：统计调用次数TPS，响应时间Mean，以及慢执行命令
+ * <p/>
  * Created by wangjun on 16/1/28.
  */
-public class RedisMonitorAfter implements RedisInvokePlugin {
+public class RedisMonitorAfter implements RedisInvokeAop {
 
     Logger logger = LoggerFactory.getLogger(getClass());
 

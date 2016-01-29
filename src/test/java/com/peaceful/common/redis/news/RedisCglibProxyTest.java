@@ -19,7 +19,7 @@ public class RedisCglibProxyTest {
     public void testGetProxyInstance() throws Exception {
         RedisCglibProxy redisCglibProxy = new RedisCglibProxy(new RedisFutureInvoke());
         JedisCommands jedisCommands = redisCglibProxy.getProxyInstance(RedisClientType.PROXY, "haproxy");
-        for (int i = 0; i < 100000; i++) {
+        for (int i=0;i<100000;i++) {
             logger.info(jedisCommands.set("foo", "bar"));
             logger.info(jedisCommands.get("foo"));
         }

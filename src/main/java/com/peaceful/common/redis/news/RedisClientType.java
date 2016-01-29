@@ -1,6 +1,8 @@
 package com.peaceful.common.redis.news;
 
 /**
+ * redis服务搭建类型
+ *
  * @author WangJun <wangjuntytl@163.com>
  * @version 1.0 15/6/22
  * @since 1.6

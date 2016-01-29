@@ -6,9 +6,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * 利用perf4j对redis命令调用前监控埋点
+ * <p/>
  * Created by wangjun on 16/1/28.
  */
-public class RedisMonitorBefore implements RedisInvokePlugin {
+public class RedisMonitorBefore implements RedisInvokeAop {
 
     Logger logger = LoggerFactory.getLogger(getClass());
 

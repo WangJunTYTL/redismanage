@@ -7,6 +7,8 @@ import redis.clients.jedis.JedisCommands;
 import java.lang.reflect.Method;
 
 /**
+ * 利用cglib实现代理，获取用户执行的命令和参数和服务节点
+ * <p/>
  * Created by wangjun on 16/1/28.
  */
 public class RedisCglibProxy implements RedisProxy {
@@ -26,7 +28,10 @@ public class RedisCglibProxy implements RedisProxy {
         enhancer.setCallback(new InvocationHandler() {
             @Override
             public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-                return redisInvoke.doInvoke(method, objects, type,node);
+                if (method.getDeclaringClass().equals(Object.class)) {
+                    return null;
+                }
+                return redisInvoke.doInvoke(method, objects, type, node);
             }
         });
         JedisCommands t = (JedisCommands) enhancer.create();
