@@ -1,13 +1,14 @@
 package com.peaceful.common.redis.service;
 
-import com.peaceful.common.redis.RedisType;
-import com.peaceful.common.redis.cglib.CglibProxySource;
-import com.peaceful.common.redis.cglib.ProxySource;
-import com.peaceful.common.redis.cglib.UsageTrackingImp;
+import com.peaceful.common.redis.news.RedisCglibProxy;
+import com.peaceful.common.redis.news.RedisClientType;
+import com.peaceful.common.redis.news.RedisFutureInvoke;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCommands;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * redis 组件
@@ -16,13 +17,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class Redis {
 
 
-    private static ProxySource<JedisCommands> proxySource;
+    private static RedisCglibProxy redisCglibProxy = new RedisCglibProxy(new RedisFutureInvoke());
+
+    private static Map<String, JedisCommands> proxyContainer = new HashMap<String, JedisCommands>();
+    private static Map<String, JedisCommands> shardContainer = new HashMap<String, JedisCommands>();
 
 
-
-    static {
-        proxySource = new CglibProxySource<JedisCommands>(JedisCommands.class);
-    }
+    static Logger logger = LoggerFactory.getLogger(Redis.class);
 
 
     /**
@@ -31,18 +32,17 @@ public abstract class Redis {
      * @return
      */
     public static JedisCommands cmd() {
-       return proxySource.createProxy("haproxy", new UsageTrackingImp(), RedisType.PROXY);
+        return cmd("haproxy");
     }
 
     /**
      * 获取指定redis节点服务
      *
-     * @param hostName
+     * @param node
      * @return
      */
-    public static JedisCommands cmd(String hostName) {
-        return proxySource.createProxy(hostName, new UsageTrackingImp(), RedisType.PROXY);
-
+    public static JedisCommands cmd(String node) {
+        return getProxy(node, RedisClientType.PROXY);
     }
 
     /**
@@ -51,17 +51,40 @@ public abstract class Redis {
      * @return
      */
     public static JedisCommands shardCmd() {
-        return proxySource.createProxy("cacheCluster", new UsageTrackingImp(), RedisType.SHARD);
+        return shardCmd("cacheCluster");
     }
 
     /**
      * 获取指定集群服务节点服务
      *
-     * @param clusterName
+     * @param node
      * @return
      */
-    public static JedisCommands shardCmd(String clusterName) {
-        return proxySource.createProxy(clusterName, new UsageTrackingImp(), RedisType.SHARD);
+    public static JedisCommands shardCmd(String node) {
+        return getProxy(node, RedisClientType.SHARD);
+    }
+
+    private static JedisCommands getProxy(String node, int type) {
+
+        Map<String, JedisCommands> container = null;
+        if (type == RedisClientType.PROXY) {
+            container = proxyContainer;
+        } else if (type == RedisClientType.SHARD) {
+            container = shardContainer;
+        }
+        if (container == null) {
+            throw new RuntimeException("Error: type param is wrong !");
+        }
+
+        if (container.containsKey(node)) {
+            return container.get(node);
+        } else {
+            JedisCommands commands = redisCglibProxy.getProxyInstance(type, node);
+            container.put(node, commands);
+            logger.info("load proxy for {} type {} Ok... ", node,type == RedisClientType.PROXY? "PROXY":"SHARD");
+            return commands;
+        }
+
     }
 
 

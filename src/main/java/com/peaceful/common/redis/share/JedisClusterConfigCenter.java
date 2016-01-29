@@ -40,7 +40,7 @@ public class JedisClusterConfigCenter {
     }
 
     public static void loadConf() {
-        Config config = ConfigFactory.load("redis/redis-cluster");
+        Config config = ConfigFactory.load("redis/redis-shard");
         ConfigObject configObject= config.getObject("redis");
         Set<String> keys = configObject.keySet();
         for(String key:keys){
