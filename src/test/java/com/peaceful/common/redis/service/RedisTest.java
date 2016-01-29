@@ -1,6 +1,9 @@
 package com.peaceful.common.redis.service;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.Util;
 
 import static org.junit.Assert.*;
 
@@ -10,23 +13,18 @@ import static org.junit.Assert.*;
  */
 public class RedisTest {
 
+    Logger logger = LoggerFactory.getLogger(getClass());
+
     @Test
     public void testCmd() throws Exception {
-        Redis.cmd().get("foo");
-    }
-
-    @Test
-    public void testCmd1() throws Exception {
-
+        for (int i = 0; i < 10; i++)
+            logger.info(Redis.cmd().get("foo"));
     }
 
     @Test
     public void testShardCmd() throws Exception {
-
+        logger.info(Redis.shardCmd("cacheCluster").get("foo"));
     }
 
-    @Test
-    public void testShardCmd1() throws Exception {
-        Redis.shardCmd("cacheCluster").get("foo");
-    }
+
 }

@@ -1,4 +1,4 @@
-package com.peaceful.common.redis;
+package com.peaceful.common.redis.news;
 
 /**
  * @author WangJun <wangjuntytl@163.com>
@@ -6,7 +6,7 @@ package com.peaceful.common.redis;
  * @since 1.6
  */
 
-public interface RedisType {
+public interface RedisClientType {
     int PROXY = 1;//通过haproxy和Twitter提供的集群方式
     int SHARD = 2;//通过shardJedis提供的集群
 }

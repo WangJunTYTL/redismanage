@@ -21,13 +21,16 @@ public class RedisNodeServiceImpl implements RedisNodeService {
     static final int UNINITIALIZED = 0;
     static final int SUCCESSFUL_INITIALIZATION = 1;
     static int INITIALIZATION_STATE = UNINITIALIZED;
-    public static String RESULT = "";
 
 
     private RedisNodeServiceImpl() {
-        logger.info("-------------------------------");
-        logger.info("redis init config suc,the config is {}",RESULT.substring(0,RESULT.length()-1));
-        logger.info("-------------------------------");
+        logger.info("----------------------------------------------");
+        logger.info("load redis proxy config Ok...");
+        logger.info("==============================================");
+        for (RedisNode node:redisNodeMap.values()){
+            logger.info("Node: {}  {}:{}",node.getHostName(),node.getIp(),node.getPort());
+        }
+        logger.info("----------------------------------------------");
     }
 
     private static class SingletonHolder {
@@ -40,7 +43,6 @@ public class RedisNodeServiceImpl implements RedisNodeService {
         try {
             Map<String, String> kv = appConfigs.toMap();
             Set<String> names = kv.keySet();
-            StringBuffer stringBuffer = new StringBuffer(kv.size()*16);
             for (String name : names) {
                 name = name.substring(0,name.indexOf("."));
                 if(redisNodeMap.containsKey(name))
@@ -52,9 +54,7 @@ public class RedisNodeServiceImpl implements RedisNodeService {
                 if (StringUtils.isNotEmpty(appConfigs.getString(name.concat(".password"))))
                     redisNode.setPassward(appConfigs.getString(name.concat(".password")));
                 redisNodeMap.put(name, redisNode);
-                stringBuffer.append(name).append("-").append(redisNode.getIp()).append("-").append(redisNode.getPort()).append(",");
             }
-            RESULT = stringBuffer.toString();
             INITIALIZATION_STATE = SUCCESSFUL_INITIALIZATION;
         } catch (Exception e) {
             INITIALIZATION_STATE = UNINITIALIZED;
@@ -69,8 +69,4 @@ public class RedisNodeServiceImpl implements RedisNodeService {
         return redisNodeMap.get(name);
     }
 
-    @Override
-    public String toString() {
-        return RESULT;
-    }
 }
