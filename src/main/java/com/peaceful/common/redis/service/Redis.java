@@ -1,8 +1,8 @@
 package com.peaceful.common.redis.service;
 
-import com.peaceful.common.redis.news.RedisCglibProxy;
-import com.peaceful.common.redis.news.RedisClientType;
-import com.peaceful.common.redis.news.RedisFutureInvoke;
+import com.peaceful.common.redis.proxy.RedisCglibProxy;
+import com.peaceful.common.redis.proxy.RedisClientType;
+import com.peaceful.common.redis.proxy.RedisFutureInvoke;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCommands;
