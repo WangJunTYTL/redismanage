@@ -26,5 +26,11 @@ public class RedisTest {
         logger.info(Redis.shardCmd("cacheCluster").get("foo"));
     }
 
+    @Test
+    public void testException() throws Exception {
+        Redis.cmd().hdel("aaa",null);
+    }
+
+
 
 }

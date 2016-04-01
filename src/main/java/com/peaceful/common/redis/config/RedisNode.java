@@ -5,7 +5,7 @@ package com.peaceful.common.redis.config;
  */
 public class RedisNode {
 
-    public String hostName;
+    public String name;
     public String ip;
     public int port;
     public String passWard;

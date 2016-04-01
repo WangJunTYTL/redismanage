@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wangjun on 16/2/1.
@@ -22,22 +23,24 @@ public class RedisConfig {
     private PoolConfig poolConfig;
     private ProxyClusterConfig proxyClusterConfig;
     private ShardClusterConfig shardClusterConfig;
+    public long futureInvokeTimeout = 2000;
     private static Logger logger = LoggerFactory.getLogger(RedisConfig.class);
 
 
     private RedisConfig() {
     }
 
-    public static RedisConfig create() {
+    public synchronized static RedisConfig create() {
         if (STATE == 0) {
             try {
                 Config config = ConfigFactory.load("redis/redis.conf");
                 Single.redisConfig.setPoolConfig(config);
                 Single.redisConfig.setProxyClusterConfig(config);
                 Single.redisConfig.setShardClusterConfig(config);
-                logger.info("-------------------------------------");
-                logger.info("redis config");
+                Single.redisConfig.futureInvokeTimeout = config.getDuration("redis.future.invoke.timeout", TimeUnit.MILLISECONDS);
                 logger.info("=====================================");
+                logger.info("redis config");
+                logger.info("-------------------------------------");
                 logger.info("maxActive: {}", Single.redisConfig.getPoolConfig().maxActive);
                 logger.info("maxIdle: {}", Single.redisConfig.getPoolConfig().maxIdle);
                 logger.info("maxWait: {}ms", Single.redisConfig.getPoolConfig().maxWait);
@@ -45,9 +48,8 @@ public class RedisConfig {
                 logger.info("testOnReturn: {}", Single.redisConfig.getPoolConfig().testOnReturn);
                 logger.info("proxy.cluster.count: {}", Single.redisConfig.getProxyClusterConfig().redisNodeMap.size());
                 logger.info("shard.cluster.count: {}", Single.redisConfig.getShardClusterConfig().shardClusterMap.size());
-                logger.info("-------------------------------------");
-
-
+                logger.info("future.invoke.timeout: {}ms", Single.redisConfig.futureInvokeTimeout);
+                logger.info("=====================================");
             } catch (Exception e) {
                 STATE = -1;
                 throw new RuntimeException(ExceptionUtils.getStackTrace(e));
@@ -88,15 +90,15 @@ public class RedisConfig {
         List<? extends ConfigObject> executors = config.getObjectList("redis.proxy");
         for (ConfigObject object : executors) {
             RedisNode redisNode = new RedisNode();
-            redisNode.hostName = object.get("name").unwrapped().toString();
+            redisNode.name = object.get("name").unwrapped().toString();
             redisNode.ip = object.get("ip").unwrapped().toString();
             if (object.containsKey("password"))
                 redisNode.passWard = object.get("password").unwrapped().toString();
             redisNode.port = Integer.valueOf(object.get("port").unwrapped().toString());
-            if (redisNodeMap.containsKey(redisNode.hostName)) {
-                throw new RuntimeException("Error: There are two " + redisNode.hostName);
+            if (redisNodeMap.containsKey(redisNode.name)) {
+                throw new RuntimeException("Error: There are two " + redisNode.name);
             } else {
-                redisNodeMap.put(redisNode.hostName, redisNode);
+                redisNodeMap.put(redisNode.name, redisNode);
             }
         }
     }
@@ -117,7 +119,7 @@ public class RedisConfig {
                 RedisNode redisNode = new RedisNode();
                 ConfigObject node = (ConfigObject) clusterNode.get(hostName);
                 Config nodeConfig = node.toConfig();
-                redisNode.hostName = hostName;
+                redisNode.name = hostName;
                 redisNode.ip = nodeConfig.getString("ip");
                 redisNode.port = nodeConfig.getInt("port");
                 if (nodeConfig.hasPath("password")) redisNode.passWard = (nodeConfig.getString("password"));

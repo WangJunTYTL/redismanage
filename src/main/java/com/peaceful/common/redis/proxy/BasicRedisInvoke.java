@@ -45,16 +45,25 @@ public class BasicRedisInvoke implements RedisInvoke {
         }
 
         // 执行并返回结果然后归还连接
+        boolean isReturn = false;
         try {
             return method.invoke(commands, args);
         } catch (Exception e) {
-            pool.returnBrokenResource(commands);
-            logger.error("Error:{}", ExceptionUtils.getStackTrace(e));
+            if (ExceptionUtils.unwrapThrowable(e) instanceof NullPointerException){
+
+            }else {
+                pool.returnBrokenResource(commands);
+                isReturn = true;
+            }
+            throw  new RuntimeException(ExceptionUtils.getStackTrace(e));
         } finally {
-            pool.returnResource(commands);
+            if (isReturn){
+                // 已归还
+            }else {
+                pool.returnResource(commands);
+            }
         }
 
-        return null;
     }
 
 

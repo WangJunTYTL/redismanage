@@ -1,5 +1,7 @@
 package com.peaceful.common.redis.proxy;
 
+import com.peaceful.common.redis.config.RedisConfig;
+import com.peaceful.common.util.CollectionHelper;
 import com.peaceful.common.util.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,12 +50,13 @@ public class RedisFutureInvoke extends BasicRedisInvoke {
         executorService.submit(future);
         Object result;
         try {
-            result = future.get(3, TimeUnit.SECONDS);
+            result = future.get(RedisConfig.create().futureInvokeTimeout, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             // 为了方便用户端直接使用服务而不显示地处理异常，异常信息均转为运行期异常
             throw new RuntimeException(ExceptionUtils.getStackTrace(e));
         } catch (ExecutionException e) {
-            throw new RuntimeException(ExceptionUtils.getStackTrace(e));
+            logger.error("Fail Cmd: {}{}",method.getName(),args);
+            throw new RuntimeException("Fail Redis cmd: "+method.getName()+ CollectionHelper.arrayToString(args)+" 执行失败\n"+e.getMessage());
         } catch (TimeoutException e) {
             throw new TimeoutException(String.format("redis cmd: %s invoke timeout at %s node", method.getName(), node));
         }
