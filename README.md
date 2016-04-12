@@ -23,41 +23,39 @@ B业务部门使用：
 
 ### jedis ShardJedis
  
-在java jedis组件中提供了一种集群方式：ShardJedis。它会对用户使用到的key进行hash计算，然后确定是利用集群中的某个节点。如果在你的项目中集群方式是这样的
-可以利用的配置文件是：redis-shard.conf
+在java jedis组件中提供了一种集群方式：ShardJedis。它采用对key进行hash计算确定该key应该落到的节点
 
 下面是配置了两个业务的集群：cacheCluster、activityCluster
 
-    ```
-    redis {
-        # 默认用于实现缓存
+     # shardjedispool 节点列表
+      shard {
+        # 用于缓存
         cacheCluster {
-            redis01 {
-                ip = "127.0.0.1"
-                port = 6379
-                password= "k74FkBwb7252FsbNk2M7"
-            },
-            redis02 {
-                ip = "127.0.0.1"
-                port = 6379
-                password= "k74FkBwb7252FsbNk2M7"
-            }
+          redis01 {
+            ip = "127.0.0.1"
+            port = 6379
+            // password = "k74FkBwb7252FsbNk2M7"
+          },
+          redis02 {
+            ip = "127.0.0.1"
+            port = 6379
+            // password = "k74FkBwb7252FsbNk2M7"
+          }
         },
         # 活动开发专用集群
-        activityCluster{
-            activity01{
-                ip = "127.0.0.1"
-                port = 6379
-            },
-            activity02{
-                ip = "127.0.0.1"
-                port = 6379
-            }
+        activityCluster {
+          activity01 {
+            ip = "127.0.0.1"
+            port = 6379
+          },
+          activity02 {
+            ip = "127.0.0.1"
+            port = 6379
+          }
         }
-    
-    }
-    ```
-    
+
+      }
+
 在使用某个集群几点时，可以这样选择服务
     
     Redis.shardCmd("cacheCluster").get("foo");
@@ -67,21 +65,51 @@ B业务部门使用：
 
 twemproxy 是Twitter提供的一种redis集群方式，具体使用可以参照其开源说明文档。
 
-在这种集群中，由于twemproxy提供的是一个代理后的url，我们不用关心在这个url后的redis实例，如果你的业务中用到的是这种redis集群，或者你不需要使用到集群
-只是用到单点，可以配置的文件是：redisnodes.properties
+在这种集群中，由于twemproxy提供的是一个代理后的url，我们不用关心在这个url后的redis实例，如果你的业务中用到的是这种redis集群，你可以通过下面配置选项
 
-    redis01.ip=127.0.0.1
-    redis01.port=6379
-    #redis01.password=k74FkBwb7252FsbNk2M7
-    
-    haproxy.ip=127.0.0.1
-    haproxy.port=6379
+     # jedispool 节点列表
+      proxy = [
+        {
+          name = "redis01"
+          ip = "127.0.0.1"
+          port = 6379
+          #password=k74FkBwb7252FsbNk2M7
+        },
+        {
+          name: "haproxy",
+          ip: "127.0.0.1",
+          port = 6379
+        }
+      ]
     
 比如在这个配置中，我配置了两个节点，在使用时就可以这样使用
     
-    Redis.cmd("cacheCluster").get("foo");
+    Redis.cmd("redis01").get("foo");
 
 
+### 其它配置项说明
+
+除了上面配置redis实例的配置项，还提供了其它一些配置，具体配置可在redis.conf进行更改
+
+```
+ # 配置redis连接池
+ pool {
+    #最大分配的对象数
+    maxActive = 2000
+    #最大能够保持idel状态的对象数
+    maxIdle = 10
+    #当池内没有返回对象时，最大等待时间
+    maxWait = 5000
+    #当调用borrow Object方法时，是否进行有效性检查
+    testOnBorrow = false
+    #当调用return Object方法时，是否进行有效性检查
+    testOnReturn = false
+  }
+
+  # 配置命令超时执行时间，如果命令执行超过设定时间,抛出超时异常,避免应用线程被长时间挂起
+  future.invoke.timeout = 5s
+
+```
 
 
 
