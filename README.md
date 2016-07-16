@@ -27,34 +27,12 @@ B业务部门使用：
 
 下面是配置了两个业务的集群：cacheCluster、activityCluster
 
-     # shardjedispool 节点列表
-      shard {
-        # 用于缓存
-        cacheCluster {
-          redis01 {
-            ip = "127.0.0.1"
-            port = 6379
-            // password = "k74FkBwb7252FsbNk2M7"
-          },
-          redis02 {
-            ip = "127.0.0.1"
-            port = 6379
-            // password = "k74FkBwb7252FsbNk2M7"
-          }
-        },
-        # 活动开发专用集群
-        activityCluster {
-          activity01 {
-            ip = "127.0.0.1"
-            port = 6379
-          },
-          activity02 {
-            ip = "127.0.0.1"
-            port = 6379
-          }
-        }
-
-      }
+     shard {
+       # cache cluster01
+       cacheCluster01: ["127.0.0.1:6379", "127.0.0.1:6379:k74FkBwb7252FsbNk2M7"]
+       # cache cluster02
+       cacheCluster02: ["127.0.0.1:6379", "127.0.0.1:6379:k74FkBwb7252FsbNk2M7"]
+     }
 
 在使用某个集群几点时，可以这样选择服务
     
@@ -67,21 +45,11 @@ twemproxy 是Twitter提供的一种redis集群方式，具体使用可以参照�
 
 在这种集群中，由于twemproxy提供的是一个代理后的url，我们不用关心在这个url后的redis实例，如果你的业务中用到的是这种redis集群，你可以通过下面配置选项
 
-     # jedispool 节点列表
-      proxy = [
-        {
-          name = "redis01"
-          ip = "127.0.0.1"
-          port = 6379
-          #password=k74FkBwb7252FsbNk2M7
-        },
-        {
-          name: "haproxy",
-          ip: "127.0.0.1",
-          port = 6379
-        }
-      ]
-    
+     proxy = {
+       redis01: "127.0.0.1:6379:k74FkBwb7252FsbNk2M7"
+       haproxy: "127.0.0.1:6379"
+     }
+
 比如在这个配置中，我配置了两个节点，在使用时就可以这样使用
     
     Redis.cmd("redis01").get("foo");
