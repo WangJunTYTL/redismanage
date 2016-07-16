@@ -1,5 +1,6 @@
 package com.peaceful.common.redis.proxy;
 
+import com.google.common.base.Throwables;
 import com.peaceful.common.redis.config.RedisConfig;
 import com.peaceful.common.util.CollectionHelper;
 import com.peaceful.common.util.ExceptionUtils;
@@ -11,7 +12,7 @@ import java.util.concurrent.*;
 
 /**
  * 利用future不是为了防止网络阻塞，但可以防止因网络阻塞或链接不释放导致调用者被长时间阻塞的问题
- *
+ * <p>
  * Created by wangjun on 16/1/29.
  */
 public class RedisFutureInvoke extends BasicRedisInvoke {
@@ -48,15 +49,15 @@ public class RedisFutureInvoke extends BasicRedisInvoke {
 
         FutureTask future = new FutureTask(new FutureInvoke(basicRedisInvoke, method, args, type, node));
         executorService.submit(future);
-        Object result;
+        Object result = null;
         try {
             result = future.get(RedisConfig.create().futureInvokeTimeout, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             // 为了方便用户端直接使用服务而不显示地处理异常，异常信息均转为运行期异常
             throw new RuntimeException(ExceptionUtils.getStackTrace(e));
         } catch (ExecutionException e) {
-            logger.error("Fail Cmd: {}{}",method.getName(),args);
-            throw new RuntimeException("Fail Redis cmd: "+method.getName()+ CollectionHelper.arrayToString(args)+" 执行失败\n"+e.getMessage());
+            logger.error("fail redis cmd: {} args:{} cause:{}", method.getName(), args,Throwables.getRootCause(e).getMessage());
+            Throwables.propagate(Throwables.getRootCause(e));
         } catch (TimeoutException e) {
             throw new TimeoutException(String.format("redis cmd: %s invoke timeout at %s node", method.getName(), node));
         }

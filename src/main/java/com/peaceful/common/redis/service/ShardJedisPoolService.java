@@ -59,7 +59,7 @@ public class ShardJedisPoolService {
             logger.info("load connections pool for {} Ok... ", nodeName);
             return shardedJedisPool;
         } else {
-            throw new RuntimeException("Not Found Node  " + nodeName);
+            throw new RuntimeException("Not Found Node: " + nodeName);
         }
     }
 

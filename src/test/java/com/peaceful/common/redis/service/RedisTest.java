@@ -23,7 +23,7 @@ public class RedisTest {
 
     @Test
     public void testShardCmd() throws Exception {
-        logger.info(Redis.shardCmd("cacheCluster").get("foo"));
+        logger.info(Redis.shardCmd("cacheCluster01").get("foo"));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.peaceful.common.redis.proxy;
 
+import com.google.common.base.Throwables;
 import com.peaceful.common.redis.service.JedisPoolService;
 import com.peaceful.common.redis.service.ShardJedisPoolService;
 import com.peaceful.common.util.ExceptionUtils;
@@ -49,22 +50,23 @@ public class BasicRedisInvoke implements RedisInvoke {
         try {
             return method.invoke(commands, args);
         } catch (Exception e) {
-            if (ExceptionUtils.unwrapThrowable(e) instanceof NullPointerException){
+            if (ExceptionUtils.unwrapThrowable(e) instanceof NullPointerException) {
 
-            }else {
+            } else {
                 pool.returnBrokenResource(commands);
                 isReturn = true;
             }
-            throw  new RuntimeException(ExceptionUtils.getStackTrace(e));
+            Throwables.propagate(e);
+//            throw  new RuntimeException(ExceptionUtils.getStackTrace(e));
         } finally {
-            if (isReturn){
+            if (isReturn) {
                 // 已归还
-            }else {
+            } else {
                 pool.returnResource(commands);
             }
         }
+        return null;
 
     }
-
 
 }
