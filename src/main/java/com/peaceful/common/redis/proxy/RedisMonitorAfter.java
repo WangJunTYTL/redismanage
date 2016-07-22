@@ -19,8 +19,7 @@ public class RedisMonitorAfter implements RedisInvokeAop {
         StopWatch stopWatch = (StopWatch) invokeContext.get("redis.stopWatch");
         long cost = stopWatch.getElapsedTime();
         String node = (String) invokeContext.get("redis.node");
-        stopWatch.stop("REDIS." + node);
-        stopWatch.stop("REDIS");
+        stopWatch.stop("REDIS." + node.toUpperCase());
         if (cost > 500) {
             logger.warn("slow cmd: {}{} cost {} ms at {} node , result {}", invokeContext.get("redis.cmd"), invokeContext.get("redis.args"), cost, invokeContext.get("redis.node"), invokeContext.get("result"));
         } else {
