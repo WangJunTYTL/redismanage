@@ -55,6 +55,7 @@ public class RedisConfig {
                 logger.info("=====================================");
             } catch (Exception e) {
                 STATE = -1;
+                logger.error(Throwables.getStackTraceAsString(e));
                 Throwables.propagate(e);
             }
             STATE = 1;
